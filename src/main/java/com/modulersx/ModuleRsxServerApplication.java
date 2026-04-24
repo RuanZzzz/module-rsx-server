@@ -1,5 +1,6 @@
 package com.modulersx;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -8,6 +9,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
+@MapperScan("com.modulersx.repository")
 public class ModuleRsxServerApplication {
 
     private static final Logger log = LoggerFactory.getLogger(ModuleRsxServerApplication.class);
