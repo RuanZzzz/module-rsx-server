@@ -28,3 +28,21 @@ ON DUPLICATE KEY UPDATE
   type = VALUES(type),
   status = VALUES(status),
   remark = VALUES(remark);
+
+CREATE TABLE IF NOT EXISTS sys_user (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password VARCHAR(128) NOT NULL,
+  nickname VARCHAR(128) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO sys_user (username, password, nickname, status)
+VALUES
+  ('admin', '123456', '系统管理员', 'enabled')
+ON DUPLICATE KEY UPDATE
+  password = VALUES(password),
+  nickname = VALUES(nickname),
+  status = VALUES(status);
