@@ -5,12 +5,10 @@ import com.modulersx.domain.dto.ModuleSaveDTO;
 import com.modulersx.domain.vo.ModuleVO;
 import com.modulersx.service.ModuleService;
 import java.util.List;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,23 +27,23 @@ public class ModuleController {
         return ApiResponse.success(moduleService.listModules());
     }
 
-    @GetMapping("/{code}")
-    public ApiResponse<ModuleVO> getModule(@PathVariable String code) {
+    @GetMapping("/detail")
+    public ApiResponse<ModuleVO> getModule(@RequestParam String code) {
         return ApiResponse.success(moduleService.getModule(code));
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ApiResponse<ModuleVO> createModule(@RequestBody ModuleSaveDTO dto) {
         return ApiResponse.success(moduleService.createModule(dto));
     }
 
-    @PutMapping("/{code}")
-    public ApiResponse<ModuleVO> updateModule(@PathVariable String code, @RequestBody ModuleSaveDTO dto) {
+    @PostMapping("/update")
+    public ApiResponse<ModuleVO> updateModule(@RequestParam String code, @RequestBody ModuleSaveDTO dto) {
         return ApiResponse.success(moduleService.updateModule(code, dto));
     }
 
-    @DeleteMapping("/{code}")
-    public ApiResponse<Void> deleteModule(@PathVariable String code) {
+    @PostMapping("/delete")
+    public ApiResponse<Void> deleteModule(@RequestParam String code) {
         moduleService.deleteModule(code);
         return ApiResponse.success(null);
     }
