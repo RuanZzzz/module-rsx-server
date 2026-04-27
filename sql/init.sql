@@ -68,3 +68,22 @@ ON DUPLICATE KEY UPDATE
   url = VALUES(url),
   description = VALUES(description),
   status = VALUES(status);
+
+CREATE TABLE IF NOT EXISTS content_article (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  summary VARCHAR(500),
+  content TEXT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO content_article (title, summary, content, status)
+VALUES
+  ('Docker 学习记录 01', '记录容器、镜像和 Dockerfile 的基础理解', '这是第一篇文章内容，后续可以继续扩展。', 'draft'),
+  ('Spring Boot 初始化总结', '记录 Java 17、Maven、Spring Boot 项目启动过程', '这是第二篇文章内容，后续会接入图片上传。', 'published')
+ON DUPLICATE KEY UPDATE
+  summary = VALUES(summary),
+  content = VALUES(content),
+  status = VALUES(status);
