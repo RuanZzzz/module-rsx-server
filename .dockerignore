@@ -1,0 +1,8 @@
+# 构建镜像时不需要把本地编译产物、IDE 配置和上传文件发送给 Docker daemon。
+target/
+.idea/
+*.iml
+.DS_Store
+.server.log
+uploads/
+.git/

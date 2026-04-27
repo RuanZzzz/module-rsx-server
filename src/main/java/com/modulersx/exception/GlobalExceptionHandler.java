@@ -2,6 +2,9 @@ package com.modulersx.exception;
 
 import com.modulersx.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +32,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ApiResponse<Void> handleConstraintViolationException(ConstraintViolationException ex) {
         return ApiResponse.fail(400, ex.getMessage());
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ApiResponse<Void> handleMissingServletRequestPartException(MissingServletRequestPartException ex) {
+        return ApiResponse.fail(400, "file cannot be empty");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ApiResponse<Void> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        return ApiResponse.fail(400, "file size cannot exceed 5MB");
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ApiResponse<Void> handleMultipartException(MultipartException ex) {
+        return ApiResponse.fail(400, "file cannot be empty");
     }
 
     @ExceptionHandler(Exception.class)

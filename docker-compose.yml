@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: module-rsx-compose-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: module_rsx
+    ports:
+      # 本机 3306 可能已经被你当前的 MySQL 容器占用，所以 Compose 版映射到 3307。
+      - "3307:3306"
+    volumes:
+      # MySQL 数据必须放在 volume 里，否则容器重建后数据库内容会丢失。
+      - mysql_data:/var/lib/mysql
+      # 首次初始化数据库时自动执行项目里的建表和种子数据脚本。
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build:
+      context: .
+    image: module-rsx-server:local
+    container_name: module-rsx-compose-server
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: module_rsx
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      # 容器内写 /app/uploads，实际文件通过下面的挂载保存到宿主机 ./uploads。
+      UPLOAD_ROOT_DIR: /app/uploads
+    ports:
+      # 本机 8082 留给 IDEA 启动的服务，Compose 版后端用 8083 访问。
+      - "8083:8082"
+    volumes:
+      # 上传文件挂到宿主机目录，容器删除或重建后图片不会跟着丢。
+      - ./uploads:/app/uploads
+
+volumes:
+  mysql_data:
