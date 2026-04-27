@@ -46,3 +46,25 @@ ON DUPLICATE KEY UPDATE
   password = VALUES(password),
   nickname = VALUES(nickname),
   status = VALUES(status);
+
+CREATE TABLE IF NOT EXISTS teaching_tool (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(128) NOT NULL,
+  category VARCHAR(64) NOT NULL,
+  url VARCHAR(255),
+  description VARCHAR(255),
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO teaching_tool (name, category, url, description, status)
+VALUES
+  ('番茄钟', 'time', 'https://pomofocus.io', '课堂计时工具', 'enabled'),
+  ('颜色选择器', 'design', 'https://coolors.co', '配色辅助工具', 'enabled'),
+  ('JSON 格式化', 'dev', 'https://json.cn', '格式化 JSON 内容', 'enabled')
+ON DUPLICATE KEY UPDATE
+  category = VALUES(category),
+  url = VALUES(url),
+  description = VALUES(description),
+  status = VALUES(status);
