@@ -11,4 +11,6 @@ public interface AuthService {
     void logout(String token);
 
     UserInfoVO currentUser(String token);
+
+    UserInfoVO validateToken(String token);
 }

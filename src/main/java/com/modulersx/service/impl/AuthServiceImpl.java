@@ -54,6 +54,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserInfoVO currentUser(String token) {
+        return validateToken(token);
+    }
+
+    @Override
+    public UserInfoVO validateToken(String token) {
         if (!StringUtils.hasText(token)) {
             throw new BizException(401, "token is missing");
         }
