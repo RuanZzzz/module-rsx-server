@@ -59,15 +59,22 @@ CREATE TABLE IF NOT EXISTS teaching_tool (
 );
 
 INSERT INTO teaching_tool (name, category, url, description, status)
-VALUES
-  ('番茄钟', 'time', 'https://pomofocus.io', '课堂计时工具', 'enabled'),
-  ('颜色选择器', 'design', 'https://coolors.co', '配色辅助工具', 'enabled'),
-  ('JSON 格式化', 'dev', 'https://json.cn', '格式化 JSON 内容', 'enabled')
-ON DUPLICATE KEY UPDATE
-  category = VALUES(category),
-  url = VALUES(url),
-  description = VALUES(description),
-  status = VALUES(status);
+SELECT '番茄钟', 'time', 'https://pomofocus.io', '课堂计时工具', 'enabled'
+WHERE NOT EXISTS (
+  SELECT 1 FROM teaching_tool WHERE name = '番茄钟'
+);
+
+INSERT INTO teaching_tool (name, category, url, description, status)
+SELECT '颜色选择器', 'design', 'https://coolors.co', '配色辅助工具', 'enabled'
+WHERE NOT EXISTS (
+  SELECT 1 FROM teaching_tool WHERE name = '颜色选择器'
+);
+
+INSERT INTO teaching_tool (name, category, url, description, status)
+SELECT 'JSON 格式化', 'dev', 'https://json.cn', '格式化 JSON 内容', 'enabled'
+WHERE NOT EXISTS (
+  SELECT 1 FROM teaching_tool WHERE name = 'JSON 格式化'
+);
 
 CREATE TABLE IF NOT EXISTS content_article (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -80,10 +87,13 @@ CREATE TABLE IF NOT EXISTS content_article (
 );
 
 INSERT INTO content_article (title, summary, content, status)
-VALUES
-  ('Docker 学习记录 01', '记录容器、镜像和 Dockerfile 的基础理解', '这是第一篇文章内容，后续可以继续扩展。', 'draft'),
-  ('Spring Boot 初始化总结', '记录 Java 17、Maven、Spring Boot 项目启动过程', '这是第二篇文章内容，后续会接入图片上传。', 'published')
-ON DUPLICATE KEY UPDATE
-  summary = VALUES(summary),
-  content = VALUES(content),
-  status = VALUES(status);
+SELECT 'Docker 学习记录 01', '记录容器、镜像和 Dockerfile 的基础理解', '这是第一篇文章内容，后续可以继续扩展。', 'draft'
+WHERE NOT EXISTS (
+  SELECT 1 FROM content_article WHERE title = 'Docker 学习记录 01'
+);
+
+INSERT INTO content_article (title, summary, content, status)
+SELECT 'Spring Boot 初始化总结', '记录 Java 17、Maven、Spring Boot 项目启动过程', '这是第二篇文章内容，后续会接入图片上传。', 'published'
+WHERE NOT EXISTS (
+  SELECT 1 FROM content_article WHERE title = 'Spring Boot 初始化总结'
+);
