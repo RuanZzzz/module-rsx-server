@@ -146,7 +146,32 @@ docker exec module-rsx-compose-redis redis-cli get module-rsx:demo
 docker exec module-rsx-compose-redis redis-cli ttl module-rsx:demo
 ```
 
-当前这一步只是验证“Spring Boot 能读写 Redis”。后续登录态改造时，会把现在保存在 JVM 内存中的 token 移到 Redis 中，解决多 Pod 场景下登录态无法共享的问题。
+## 登录态 Redis 存储
+
+当前登录 token 已经从 JVM 内存迁移到 Redis。
+
+登录后会写入：
+
+```text
+module-rsx:auth:token:{token}
+```
+
+这个 key 保存当前登录用户信息，并设置默认 120 分钟过期时间。每次带有效 `X-Token` 访问受保护接口时，后端会刷新这个 token 的过期时间。
+
+验证登录 token 是否在 Redis：
+
+```bash
+docker exec module-rsx-compose-redis redis-cli keys 'module-rsx:auth:token:*'
+docker exec module-rsx-compose-redis redis-cli ttl 'module-rsx:auth:token:你的token'
+```
+
+登出后，对应 Redis key 会被删除，再使用旧 token 访问接口会返回：
+
+```text
+login expired or invalid token
+```
+
+这一步解决的是多实例问题：以后多个后端 Pod 同时运行时，它们不再依赖各自 JVM 内存，而是统一从 Redis 查询登录态。
 
 ## 目录规范
 
