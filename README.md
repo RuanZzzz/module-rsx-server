@@ -115,6 +115,39 @@ docker exec module-rsx-compose-redis redis-cli ping
 PONG
 ```
 
+## Redis 验证接口
+
+当前已经接入 Spring Boot Redis 客户端，用于验证后端服务是否能通过 Compose 服务名访问 Redis。
+
+这些接口属于 `/api/**`，所以需要先登录并在请求头带 `X-Token`。
+
+验证 Spring Boot 到 Redis 的连通性：
+
+```text
+GET /api/redis/ping
+```
+
+写入一个 10 分钟过期的演示值：
+
+```text
+POST /api/redis/demo?value=hello-redis
+```
+
+读取演示值：
+
+```text
+GET /api/redis/demo
+```
+
+也可以直接进入 Redis 容器验证真实数据：
+
+```bash
+docker exec module-rsx-compose-redis redis-cli get module-rsx:demo
+docker exec module-rsx-compose-redis redis-cli ttl module-rsx:demo
+```
+
+当前这一步只是验证“Spring Boot 能读写 Redis”。后续登录态改造时，会把现在保存在 JVM 内存中的 token 移到 Redis 中，解决多 Pod 场景下登录态无法共享的问题。
+
 ## 目录规范
 
 后续服务端目录结构按这里约定推进：
