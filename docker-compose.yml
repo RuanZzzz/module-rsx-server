@@ -39,7 +39,6 @@ services:
     build:
       context: .
     image: module-rsx-server:local
-    container_name: module-rsx-compose-server
     depends_on:
       mysql:
         condition: service_healthy
@@ -57,8 +56,8 @@ services:
       # 容器内写 /app/uploads，实际文件通过下面的挂载保存到宿主机 ./uploads。
       UPLOAD_ROOT_DIR: /app/uploads
     ports:
-      # 本机 8082 留给 IDEA 启动的服务，Compose 版后端用 8083 访问。
-      - "8083:8082"
+      # 使用端口范围后，docker compose --scale server=2 可以把两个后端实例分别映射到 8083 和 8084。
+      - "8083-8084:8082"
     volumes:
       # 上传文件挂到宿主机目录，容器删除或重建后图片不会跟着丢。
       - ./uploads:/app/uploads

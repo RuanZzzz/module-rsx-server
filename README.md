@@ -103,6 +103,31 @@ localhost:3307
 - `docker compose down` 不会删除 `mysql_data` volume
 - `docker compose down -v` 会删除 MySQL 和 Redis volume，对应数据会被清掉
 
+启动两个后端实例：
+
+```bash
+docker compose up -d --build --scale server=2
+```
+
+当前 `server` 使用端口范围：
+
+```text
+8083-8084:8082
+```
+
+所以两个后端实例会分别映射到：
+
+```text
+http://localhost:8083
+http://localhost:8084
+```
+
+恢复成一个后端实例：
+
+```bash
+docker compose up -d --scale server=1
+```
+
 验证 Redis：
 
 ```bash
