@@ -3,12 +3,12 @@ FROM maven:3.9.9-eclipse-temurin-17 AS builder
 
 WORKDIR /workspace
 
-# 先复制 pom.xml，可以让 Maven 依赖下载结果尽量复用 Docker 构建缓存。
+# 先复制 pom.xml，可以让 Maven 下载依赖的结果尽量复用 Docker 构建缓存。
 COPY pom.xml .
-RUN mvn -B dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -DskipTests package
+# 直接打包项目，同时跳过测试编译，避免镜像构建阶段下载额外的测试插件依赖。
+RUN mvn -B -Dmaven.test.skip=true package
 
 # 第二阶段：只保留运行 jar 需要的 JRE，减少最终镜像体积。
 FROM eclipse-temurin:17-jre
