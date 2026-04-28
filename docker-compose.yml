@@ -19,6 +19,22 @@ services:
       timeout: 3s
       retries: 20
 
+  redis:
+    image: redis:7
+    container_name: module-rsx-compose-redis
+    ports:
+      # 本机 6379 如果没有被占用，可以直接映射到 Redis 默认端口。
+      - "6379:6379"
+    volumes:
+      # Redis 数据放到 volume 里，后续接入缓存或登录态时不会因为容器重建直接丢失。
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   server:
     build:
       context: .
@@ -27,12 +43,17 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: module_rsx
       DB_USERNAME: root
       DB_PASSWORD: root
+      # 容器之间不要写 localhost，后端通过 Compose 服务名 redis 访问 Redis 容器。
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       # 容器内写 /app/uploads，实际文件通过下面的挂载保存到宿主机 ./uploads。
       UPLOAD_ROOT_DIR: /app/uploads
     ports:
@@ -44,3 +65,4 @@ services:
 
 volumes:
   mysql_data:
+  redis_data:

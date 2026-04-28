@@ -84,13 +84,16 @@ docker compose down
 localhost:3307
 ```
 
-当前 Compose 编排了两个服务：
+当前 Compose 编排了三个服务：
 
 - `mysql`
   使用 `mysql:8.4`，数据保存到 Docker volume `mysql_data`
 
+- `redis`
+  使用 `redis:7`，数据保存到 Docker volume `redis_data`，后续用于学习缓存和多 Pod 登录态共享
+
 - `server`
-  使用当前项目的 `Dockerfile` 构建镜像，上传目录挂载到宿主机 `./uploads`
+  使用当前项目的 `Dockerfile` 构建镜像，上传目录挂载到宿主机 `./uploads`，通过服务名 `mysql` 和 `redis` 访问依赖服务
 
 关键点：
 
@@ -98,7 +101,19 @@ localhost:3307
 - Compose 模式：容器内写 `/app/uploads`，但通过挂载落到宿主机 `./uploads`
 - 两种模式最终都能在项目目录看到上传文件
 - `docker compose down` 不会删除 `mysql_data` volume
-- `docker compose down -v` 会删除 MySQL volume，数据库数据会被清掉
+- `docker compose down -v` 会删除 MySQL 和 Redis volume，对应数据会被清掉
+
+验证 Redis：
+
+```bash
+docker exec module-rsx-compose-redis redis-cli ping
+```
+
+正常返回：
+
+```text
+PONG
+```
 
 ## 目录规范
 
