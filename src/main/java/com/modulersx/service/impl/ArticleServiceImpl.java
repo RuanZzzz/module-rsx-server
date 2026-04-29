@@ -30,8 +30,28 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public List<ArticleVO> listPublishedArticles() {
+        return articleMapper.selectList(new LambdaQueryWrapper<ArticlePO>()
+                        // 前台门户只展示已发布文章，避免草稿内容被公开访问。
+                        .eq(ArticlePO::getStatus, "published")
+                        .orderByDesc(ArticlePO::getId))
+                .stream()
+                .map(this::toVO)
+                .toList();
+    }
+
+    @Override
     public ArticleVO getArticle(Long id) {
         return toVO(requireArticle(id));
+    }
+
+    @Override
+    public ArticleVO getPublishedArticle(Long id) {
+        ArticlePO article = requireArticle(id);
+        if (!"published".equals(article.getStatus())) {
+            throw new BizException(404, "article not found");
+        }
+        return toVO(article);
     }
 
     @Override

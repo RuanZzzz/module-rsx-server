@@ -8,6 +8,8 @@ public interface ToolService {
 
     List<ToolVO> listTools();
 
+    List<ToolVO> listEnabledTools();
+
     ToolVO getTool(Long id);
 
     ToolVO createTool(ToolSaveDTO dto);

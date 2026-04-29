@@ -30,6 +30,17 @@ public class ToolServiceImpl implements ToolService {
     }
 
     @Override
+    public List<ToolVO> listEnabledTools() {
+        return toolMapper.selectList(new LambdaQueryWrapper<ToolPO>()
+                        // 前台门户只展示启用状态的工具，停用工具仍可在管理端维护。
+                        .eq(ToolPO::getStatus, "enabled")
+                        .orderByAsc(ToolPO::getId))
+                .stream()
+                .map(this::toVO)
+                .toList();
+    }
+
+    @Override
     public ToolVO getTool(Long id) {
         return toVO(requireTool(id));
     }

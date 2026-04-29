@@ -8,7 +8,11 @@ public interface ArticleService {
 
     List<ArticleVO> listArticles();
 
+    List<ArticleVO> listPublishedArticles();
+
     ArticleVO getArticle(Long id);
+
+    ArticleVO getPublishedArticle(Long id);
 
     ArticleVO createArticle(ArticleSaveDTO dto);
 
