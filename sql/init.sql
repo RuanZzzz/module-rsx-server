@@ -76,6 +76,18 @@ WHERE NOT EXISTS (
   SELECT 1 FROM teaching_tool WHERE name = 'JSON 格式化'
 );
 
+INSERT INTO teaching_tool (name, category, url, description, status)
+SELECT '计数器教学', 'math', '/tools/calculator-teaching.html', '适合课堂演示计数和拨珠关系的 HTML 教学工具', 'enabled'
+WHERE NOT EXISTS (
+  SELECT 1 FROM teaching_tool WHERE name = '计数器教学'
+);
+
+INSERT INTO teaching_tool (name, category, url, description, status)
+SELECT '算盘教学', 'math', '/tools/abacus-teaching.html', '适合课堂演示算盘结构和数位变化的 HTML 教学工具', 'enabled'
+WHERE NOT EXISTS (
+  SELECT 1 FROM teaching_tool WHERE name = '算盘教学'
+);
+
 CREATE TABLE IF NOT EXISTS content_article (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   title VARCHAR(255) NOT NULL,
