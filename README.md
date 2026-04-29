@@ -200,7 +200,7 @@ login expired or invalid token
 
 ## 日志管理
 
-当前应用日志通过 `logback-spring.xml` 分类写入文件。
+当前应用日志通过 `log4j2-spring.xml` 分类写入文件。
 
 本地 IDEA 启动时默认写入：
 

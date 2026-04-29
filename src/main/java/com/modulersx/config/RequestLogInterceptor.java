@@ -3,15 +3,15 @@ package com.modulersx.config;
 import com.modulersx.common.log.AppLoggers;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class RequestLogInterceptor implements HandlerInterceptor {
 
-    private static final Logger processLog = LoggerFactory.getLogger(AppLoggers.PROCESS);
+    private static final Logger processLog = LogManager.getLogger(AppLoggers.PROCESS);
     private static final String START_TIME_ATTRIBUTE = "requestStartTime";
 
     @Override

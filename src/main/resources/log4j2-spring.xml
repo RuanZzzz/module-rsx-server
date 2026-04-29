@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="LOG_DIR">${env:LOG_DIR:-./logs}</Property>
+        <!-- 多个后端实例会同时写日志，所以按实例名分目录，避免多个 JVM 抢同一个滚动日志文件。 -->
+        <Property name="LOG_INSTANCE">${env:HOSTNAME:-local}</Property>
+        <Property name="LOG_PATH">${LOG_DIR}/${LOG_INSTANCE}</Property>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}" charset="UTF-8"/>
+        </Console>
+
+        <RollingFile
+                name="PROCESS_FILE"
+                fileName="${LOG_PATH}/process.log"
+                filePattern="${LOG_PATH}/archive/process.%d{yyyy-MM-dd}.%i.log.gz">
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="ACCEPT"/>
+            </Filters>
+            <PatternLayout pattern="${LOG_PATTERN}" charset="UTF-8"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <RollingFile
+                name="BUSINESS_ERROR_FILE"
+                fileName="${LOG_PATH}/businessErr.log"
+                filePattern="${LOG_PATH}/archive/businessErr.%d{yyyy-MM-dd}.%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}" charset="UTF-8"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+
+        <RollingFile
+                name="SYSTEM_ERROR_FILE"
+                fileName="${LOG_PATH}/error.log"
+                filePattern="${LOG_PATH}/archive/error.%d{yyyy-MM-dd}.%i.log.gz">
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="${LOG_PATTERN}" charset="UTF-8"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="20MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="PROCESS" level="INFO" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="PROCESS_FILE"/>
+        </Logger>
+
+        <Logger name="BUSINESS_ERROR" level="WARN" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="BUSINESS_ERROR_FILE"/>
+        </Logger>
+
+        <Logger name="SYSTEM_ERROR" level="ERROR" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="SYSTEM_ERROR_FILE"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="PROCESS_FILE"/>
+            <AppenderRef ref="SYSTEM_ERROR_FILE"/>
+        </Root>
+    </Loggers>
+</Configuration>
