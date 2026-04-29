@@ -198,6 +198,49 @@ login expired or invalid token
 
 这一步解决的是多实例问题：以后多个后端 Pod 同时运行时，它们不再依赖各自 JVM 内存，而是统一从 Redis 查询登录态。
 
+## 日志管理
+
+当前应用日志通过 `logback-spring.xml` 分类写入文件。
+
+本地 IDEA 启动时默认写入：
+
+```text
+logs/{本机或实例名}/
+```
+
+Docker Compose 启动时，容器内目录：
+
+```text
+/app/logs
+```
+
+会挂载到宿主机项目目录：
+
+```text
+./logs
+```
+
+日志分类：
+
+- `process.log`
+  记录启动日志、框架过程日志、HTTP 请求过程日志等非 ERROR 级别日志
+
+- `businessErr.log`
+  记录主动抛出的 `BizException`，以及请求参数错误、上传错误、404、405 等可预期请求异常
+
+- `error.log`
+  记录未预期系统异常，并保留完整堆栈
+
+多后端实例时，为了避免两个 JVM 同时写同一个日志文件，每个实例会有独立目录：
+
+```text
+logs/{container-id}/process.log
+logs/{container-id}/businessErr.log
+logs/{container-id}/error.log
+```
+
+这样容器重建后，宿主机 `./logs` 下的历史日志仍然保留。
+
 ## 目录规范
 
 后续服务端目录结构按这里约定推进：

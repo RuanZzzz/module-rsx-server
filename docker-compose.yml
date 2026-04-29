@@ -61,6 +61,8 @@ services:
     volumes:
       # 上传文件挂到宿主机目录，容器删除或重建后图片不会跟着丢。
       - ./uploads:/app/uploads
+      # 应用日志挂到宿主机目录，容器重建后历史日志仍然保留在 ./logs。
+      - ./logs:/app/logs
 
 volumes:
   mysql_data:

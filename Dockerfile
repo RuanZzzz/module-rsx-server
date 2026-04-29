@@ -17,6 +17,8 @@ WORKDIR /app
 
 # 容器内固定使用 /app/uploads，后续通过 Docker volume 或宿主机目录挂载来持久化。
 ENV UPLOAD_ROOT_DIR=/app/uploads
+# 容器内日志写到 /app/logs，Compose 会把这个目录挂载到宿主机，避免容器重建后日志丢失。
+ENV LOG_DIR=/app/logs
 
 COPY --from=builder /workspace/target/module-rsx-server-0.0.1-SNAPSHOT.jar /app/app.jar
 

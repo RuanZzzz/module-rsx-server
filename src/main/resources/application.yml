@@ -7,6 +7,8 @@ app:
     access-path: /uploads
   auth:
     token-ttl-minutes: ${AUTH_TOKEN_TTL_MINUTES:120}
+  log:
+    root-dir: ${LOG_DIR:./logs}
 
 spring:
   datasource:

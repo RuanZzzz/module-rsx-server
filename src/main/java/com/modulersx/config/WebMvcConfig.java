@@ -11,20 +11,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final LoginInterceptor loginInterceptor;
+    private final RequestLogInterceptor requestLogInterceptor;
     private final String uploadRootDir;
     private final String uploadAccessPath;
 
     public WebMvcConfig(
             LoginInterceptor loginInterceptor,
+            RequestLogInterceptor requestLogInterceptor,
             @Value("${app.upload.root-dir:./uploads}") String uploadRootDir,
             @Value("${app.upload.access-path:/uploads}") String uploadAccessPath) {
         this.loginInterceptor = loginInterceptor;
+        this.requestLogInterceptor = requestLogInterceptor;
         this.uploadRootDir = uploadRootDir;
         this.uploadAccessPath = uploadAccessPath;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(requestLogInterceptor)
+                .addPathPatterns("/**");
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
