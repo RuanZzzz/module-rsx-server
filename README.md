@@ -241,6 +241,23 @@ logs/{container-id}/error.log
 
 这样容器重建后，宿主机 `./logs` 下的历史日志仍然保留。
 
+## Docker 构建缓存
+
+当前 Dockerfile 使用 BuildKit cache mount 缓存 Maven 本地仓库：
+
+```dockerfile
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -Dmaven.test.skip=true package
+```
+
+作用：
+
+- 第一次构建会正常下载 Maven 依赖
+- 后续构建可以复用 `/root/.m2` 缓存
+- 修改 Java 代码后重新构建，不需要把所有依赖重新下载一遍
+
+`.dockerignore` 已排除 `uploads/` 和 `logs/`，避免把运行时文件发送到 Docker 构建上下文。
+
 ## 目录规范
 
 后续服务端目录结构按这里约定推进：

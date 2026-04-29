@@ -7,8 +7,9 @@ WORKDIR /workspace
 COPY pom.xml .
 
 COPY src ./src
-# 直接打包项目，同时跳过测试编译，避免镜像构建阶段下载额外的测试插件依赖。
-RUN mvn -B -Dmaven.test.skip=true package
+# 使用 BuildKit 缓存 Maven 本地仓库，避免每次镜像构建都重新下载依赖。
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -Dmaven.test.skip=true package
 
 # 第二阶段：只保留运行 jar 需要的 JRE，减少最终镜像体积。
 FROM eclipse-temurin:17-jre
