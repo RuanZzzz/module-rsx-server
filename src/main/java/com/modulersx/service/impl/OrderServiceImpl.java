@@ -20,6 +20,7 @@ import com.modulersx.service.OrderService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -58,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderVO createOrder(OrderSaveDTO dto) {
         validateOrder(dto);
         if (existsByOrderNo(dto.getOrderNo())) {
@@ -71,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderVO updateOrder(Long id, OrderSaveDTO dto) {
         validateOrder(dto);
         OrderPO order = requireOrder(id);
@@ -83,12 +86,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderVO changeStatus(Long id, OrderStatusChangeDTO dto) {
         if (!StringUtils.hasText(dto.getStatus())) {
             throw new BizException(400, "order status cannot be blank");
         }
         OrderPO order = requireOrder(id);
         String fromStatus = order.getStatus();
+        validateStatusTransition(fromStatus, dto.getStatus());
         order.setStatus(dto.getStatus());
         orderMapper.updateById(order);
         // 每次状态变化都写入日志，后续排查订单流转问题时能看到完整时间线。
@@ -97,8 +102,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderVO bindExpress(Long id, OrderExpressBindDTO dto) {
-        requireOrder(id);
+        OrderPO order = requireOrder(id);
+        validateBeforeShipping(order);
         validateExpress(dto);
         OrderExpressPO express = findExpress(id);
         if (express == null) {
@@ -116,10 +123,19 @@ public class OrderServiceImpl implements OrderService {
         } else {
             expressMapper.updateById(express);
         }
+        if ("PACKED".equals(order.getStatus())) {
+            order.setStatus("SHIPPING");
+            orderMapper.updateById(order);
+            // 打包完成后填写发货信息，订单才正式进入配送中。
+            insertStatusLog(order.getId(), "PACKED", "SHIPPING", "admin", "填写发货信息，订单进入配送中");
+        } else {
+            insertStatusLog(order.getId(), "SHIPPING", "SHIPPING", "admin", "更新物流信息");
+        }
         return getOrder(id);
     }
 
     @Override
+    @Transactional
     public ExpressTraceVO queryExpressTrace(Long id) {
         requireOrder(id);
         OrderExpressPO express = findExpress(id);
@@ -160,6 +176,27 @@ public class OrderServiceImpl implements OrderService {
         }
         if (!StringUtils.hasText(dto.getTrackingNo())) {
             throw new BizException(400, "tracking no cannot be blank");
+        }
+    }
+
+    private void validateBeforeShipping(OrderPO order) {
+        if (!"PACKED".equals(order.getStatus()) && !"SHIPPING".equals(order.getStatus())) {
+            throw new BizException(400, "express can only be edited after order is packed");
+        }
+    }
+
+    private void validateStatusTransition(String fromStatus, String toStatus) {
+        if (fromStatus.equals(toStatus)) {
+            return;
+        }
+        if ("SHIPPING".equals(toStatus)) {
+            throw new BizException(400, "please bind express info before shipping");
+        }
+        boolean allowed = ("NOT_STARTED".equals(fromStatus) && "PRODUCING".equals(toStatus))
+                || ("PRODUCING".equals(fromStatus) && "PACKED".equals(toStatus))
+                || ("SHIPPING".equals(fromStatus) && "COMPLETED".equals(toStatus));
+        if (!allowed) {
+            throw new BizException(400, "invalid order status transition");
         }
     }
 
