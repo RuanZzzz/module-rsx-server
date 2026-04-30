@@ -21,8 +21,8 @@ INSERT INTO sys_module (code, name, type, status, remark)
 VALUES
   ('module', '模块管理', 'system', 'enabled', '管理系统内可用模块'),
   ('tool', '教学工具', 'business', 'enabled', '管理教学工具内容'),
-  ('article', '文章管理', 'content', 'disabled', '后续会接入文章与图片上传'),
-  ('order', '订单管理', 'business', 'disabled', '后续用于订单状态跟踪')
+  ('article', '文章管理', 'content', 'enabled', '维护文章与图片内容'),
+  ('order', '订单管理', 'business', 'enabled', '维护订单生产状态与物流轨迹')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   type = VALUES(type),
@@ -120,3 +120,78 @@ CREATE TABLE IF NOT EXISTS file_resource (
   size BIGINT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS biz_order (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  order_no VARCHAR(64) NOT NULL UNIQUE,
+  customer_name VARCHAR(128) NOT NULL,
+  product_name VARCHAR(128) NOT NULL,
+  quantity INT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  remark VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS biz_order_status_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  order_id BIGINT NOT NULL,
+  from_status VARCHAR(32),
+  to_status VARCHAR(32) NOT NULL,
+  operator VARCHAR(64),
+  remark VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS biz_order_express (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  order_id BIGINT NOT NULL UNIQUE,
+  express_company_code VARCHAR(32) NOT NULL,
+  express_company_name VARCHAR(64) NOT NULL,
+  tracking_no VARCHAR(128) NOT NULL,
+  receiver_phone_suffix VARCHAR(16),
+  latest_status VARCHAR(64),
+  latest_location VARCHAR(128),
+  latest_trace_time DATETIME,
+  raw_response TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO biz_order (order_no, customer_name, product_name, quantity, status, remark)
+SELECT 'JZ202604300001', '阮同学', '手工饺子礼盒', 2, 'SHIPPING', '第一条订单示例，已进入配送中'
+WHERE NOT EXISTS (
+  SELECT 1 FROM biz_order WHERE order_no = 'JZ202604300001'
+);
+
+INSERT INTO biz_order_status_log (order_id, from_status, to_status, operator, remark)
+SELECT o.id, NULL, 'NOT_STARTED', 'system', '创建订单'
+FROM biz_order o
+WHERE o.order_no = 'JZ202604300001'
+  AND NOT EXISTS (
+    SELECT 1 FROM biz_order_status_log l WHERE l.order_id = o.id AND l.to_status = 'NOT_STARTED'
+  );
+
+INSERT INTO biz_order_status_log (order_id, from_status, to_status, operator, remark)
+SELECT o.id, 'PACKED', 'SHIPPING', 'admin', '绑定快递后开始配送'
+FROM biz_order o
+WHERE o.order_no = 'JZ202604300001'
+  AND NOT EXISTS (
+    SELECT 1 FROM biz_order_status_log l WHERE l.order_id = o.id AND l.to_status = 'SHIPPING'
+  );
+
+INSERT INTO biz_order_express (
+  order_id,
+  express_company_code,
+  express_company_name,
+  tracking_no,
+  receiver_phone_suffix,
+  latest_status,
+  latest_location
+)
+SELECT o.id, 'SF', '顺丰速运', 'SF1234567890', '1234', '配送中', '深圳南山派送网点'
+FROM biz_order o
+WHERE o.order_no = 'JZ202604300001'
+  AND NOT EXISTS (
+    SELECT 1 FROM biz_order_express e WHERE e.order_id = o.id
+  );
