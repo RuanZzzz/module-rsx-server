@@ -22,7 +22,8 @@ VALUES
   ('module', '模块管理', 'system', 'enabled', '管理系统内可用模块'),
   ('tool', '教学工具', 'business', 'enabled', '管理教学工具内容'),
   ('article', '文章管理', 'content', 'enabled', '维护文章与图片内容'),
-  ('order', '订单管理', 'business', 'enabled', '维护订单生产状态与物流轨迹')
+  ('order', '订单管理', 'business', 'enabled', '维护订单生产状态与物流轨迹'),
+  ('window-glass', '窗户玻璃计算', 'business', 'enabled', '维护窗型模板、玻璃面积计算和方案保存')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   type = VALUES(type),
@@ -195,3 +196,53 @@ WHERE o.order_no = 'JZ202604300001'
   AND NOT EXISTS (
     SELECT 1 FROM biz_order_express e WHERE e.order_id = o.id
   );
+
+CREATE TABLE IF NOT EXISTS window_template (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  code VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(128) NOT NULL,
+  shape_type VARCHAR(64) NOT NULL,
+  description VARCHAR(255),
+  schema_json TEXT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS window_design (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(128) NOT NULL,
+  template_id BIGINT NOT NULL,
+  template_code VARCHAR(64) NOT NULL,
+  customer_name VARCHAR(128),
+  params_json TEXT NOT NULL,
+  total_area DECIMAL(12,4) NOT NULL,
+  remark VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS window_glass_piece (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  design_id BIGINT NOT NULL,
+  name VARCHAR(128) NOT NULL,
+  shape_type VARCHAR(64) NOT NULL,
+  shape_data_json TEXT NOT NULL,
+  area DECIMAL(12,4) NOT NULL,
+  sort_order INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO window_template (code, name, shape_type, description, schema_json, status)
+VALUES
+  ('rectangle', '矩形窗', 'RECTANGLE', '最常见的平面矩形玻璃，输入宽度和高度计算面积。', '{"fields":[{"key":"width","label":"宽度","unit":"mm","defaultValue":1200},{"key":"height","label":"高度","unit":"mm","defaultValue":1500}]}', 'enabled'),
+  ('triangle', '三角窗', 'TRIANGLE', '适合斜顶、尖顶等三角形异形玻璃。', '{"fields":[{"key":"base","label":"底边","unit":"mm","defaultValue":1200},{"key":"height","label":"高度","unit":"mm","defaultValue":900}]}', 'enabled'),
+  ('trapezoid', '梯形窗', 'TRAPEZOID', '适合上下边不等长的斜边窗。', '{"fields":[{"key":"topWidth","label":"上底","unit":"mm","defaultValue":900},{"key":"bottomWidth","label":"下底","unit":"mm","defaultValue":1400},{"key":"height","label":"高度","unit":"mm","defaultValue":1200}]}', 'enabled'),
+  ('l-shape', 'L 型异形窗', 'L_SHAPE', '按外接矩形减去缺口计算，适合平面 L 型玻璃。', '{"fields":[{"key":"width","label":"总宽","unit":"mm","defaultValue":1800},{"key":"height","label":"总高","unit":"mm","defaultValue":1500},{"key":"cutWidth","label":"缺口宽","unit":"mm","defaultValue":600},{"key":"cutHeight","label":"缺口高","unit":"mm","defaultValue":500}]}', 'enabled'),
+  ('corner', '90 度转角窗', 'CORNER', '把转角窗拆成正面和侧面两块玻璃分别计算。', '{"fields":[{"key":"frontWidth","label":"正面宽","unit":"mm","defaultValue":1600},{"key":"sideWidth","label":"侧面宽","unit":"mm","defaultValue":900},{"key":"height","label":"高度","unit":"mm","defaultValue":1500}]}', 'enabled')
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  shape_type = VALUES(shape_type),
+  description = VALUES(description),
+  schema_json = VALUES(schema_json),
+  status = VALUES(status);
