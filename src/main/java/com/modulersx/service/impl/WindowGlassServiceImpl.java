@@ -166,17 +166,52 @@ public class WindowGlassServiceImpl implements WindowGlassService {
             throw new BizException(400, "custom polygon point count must be between 3 and 12");
         }
         BigDecimal doubleArea = BigDecimal.ZERO;
+        List<BigDecimal> xs = new ArrayList<>();
+        List<BigDecimal> ys = new ArrayList<>();
         for (int i = 1; i <= pointCount; i++) {
             int next = i == pointCount ? 1 : i + 1;
             BigDecimal x1 = nonNegative(params, "x" + i);
             BigDecimal y1 = nonNegative(params, "y" + i);
             BigDecimal x2 = nonNegative(params, "x" + next);
             BigDecimal y2 = nonNegative(params, "y" + next);
+            xs.add(x1);
+            ys.add(y1);
             doubleArea = doubleArea.add(x1.multiply(y2).subtract(x2.multiply(y1)));
         }
-        // 自定义多边形用鞋带公式计算面积，坐标单位为 cm，最终统一换算为平方米。
-        BigDecimal area = toSquareMeter(doubleArea.abs().divide(new BigDecimal("2"), 4, RoundingMode.HALF_UP));
+        BigDecimal drawnArea = doubleArea.abs().divide(new BigDecimal("2"), 4, RoundingMode.HALF_UP);
+        BigDecimal area = toSquareMeter(resolveCustomPolygonArea(params, xs, ys, drawnArea));
         return List.of(piece("自定义多边形玻璃", "CUSTOM_POLYGON", params, area, 1));
+    }
+
+    private BigDecimal resolveCustomPolygonArea(Map<String, BigDecimal> params, List<BigDecimal> xs, List<BigDecimal> ys, BigDecimal drawnArea) {
+        if (!params.containsKey("length1")) {
+            // 兼容旧的坐标输入方式：没有边长标注时，坐标直接按 cm 处理。
+            return drawnArea;
+        }
+        BigDecimal unitToCm = params.getOrDefault("unitToCm", BigDecimal.ONE);
+        if (unitToCm.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BizException(400, "window unit conversion must be greater than 0");
+        }
+        BigDecimal scaleTotal = BigDecimal.ZERO;
+        int pointCount = xs.size();
+        for (int i = 0; i < pointCount; i++) {
+            int next = i == pointCount - 1 ? 0 : i + 1;
+            BigDecimal actualLength = positive(params, "length" + (i + 1)).multiply(unitToCm);
+            BigDecimal drawnLength = distance(xs.get(i), ys.get(i), xs.get(next), ys.get(next));
+            if (drawnLength.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BizException(400, "custom polygon edge length cannot be 0");
+            }
+            scaleTotal = scaleTotal.add(actualLength.divide(drawnLength, 8, RoundingMode.HALF_UP));
+        }
+        BigDecimal avgScale = scaleTotal.divide(new BigDecimal(pointCount), 8, RoundingMode.HALF_UP);
+        // 画布坐标只负责表达形状比例，边长标注负责把画布面积换算成真实 cm²。
+        return drawnArea.multiply(avgScale).multiply(avgScale);
+    }
+
+    private BigDecimal distance(BigDecimal x1, BigDecimal y1, BigDecimal x2, BigDecimal y2) {
+        double dx = x1.subtract(x2).doubleValue();
+        double dy = y1.subtract(y2).doubleValue();
+        return BigDecimal.valueOf(Math.sqrt(dx * dx + dy * dy));
     }
 
     private BigDecimal rectangleArea(Map<String, BigDecimal> params, String widthKey, String heightKey) {

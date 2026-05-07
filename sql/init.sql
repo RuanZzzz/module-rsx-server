@@ -240,7 +240,7 @@ VALUES
   ('trapezoid', '梯形窗', 'TRAPEZOID', '适合上下边不等长的斜边窗。', '{"fields":[{"key":"topWidth","label":"上底","unit":"cm","defaultValue":90},{"key":"bottomWidth","label":"下底","unit":"cm","defaultValue":140},{"key":"height","label":"高度","unit":"cm","defaultValue":120}]}', 'enabled'),
   ('l-shape', 'L 型异形窗', 'L_SHAPE', '按外接矩形减去缺口计算，适合平面 L 型玻璃。', '{"fields":[{"key":"width","label":"总宽","unit":"cm","defaultValue":180},{"key":"height","label":"总高","unit":"cm","defaultValue":150},{"key":"cutWidth","label":"缺口宽","unit":"cm","defaultValue":60},{"key":"cutHeight","label":"缺口高","unit":"cm","defaultValue":50}]}', 'enabled'),
   ('corner', '90 度转角窗', 'CORNER', '把转角窗拆成正面和侧面两块玻璃分别计算。', '{"fields":[{"key":"frontWidth","label":"正面宽","unit":"cm","defaultValue":160},{"key":"sideWidth","label":"侧面宽","unit":"cm","defaultValue":90},{"key":"height","label":"高度","unit":"cm","defaultValue":150}]}', 'enabled'),
-  ('custom-polygon', '自定义多边形窗', 'CUSTOM_POLYGON', '适合现场不标准的平面异形窗，通过点位坐标计算面积。', '{"fields":[],"customPolygon":true}', 'enabled')
+  ('custom-polygon', '自定义多边形窗', 'CUSTOM_POLYGON', '适合现场不标准的平面异形窗，在画布上画轮廓后给每条边标注长度。', '{"fields":[],"customPolygon":true,"drawMode":true}', 'enabled')
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   shape_type = VALUES(shape_type),
