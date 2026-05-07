@@ -32,7 +32,7 @@ import org.springframework.util.StringUtils;
 public class WindowGlassServiceImpl implements WindowGlassService {
 
     private static final Logger PROCESS_LOG = LogManager.getLogger(AppLoggers.PROCESS);
-    private static final BigDecimal SQUARE_MILLIMETER_TO_METER = new BigDecimal("1000000");
+    private static final BigDecimal SQUARE_CENTIMETER_TO_METER = new BigDecimal("10000");
 
     private final WindowTemplateMapper templateMapper;
     private final WindowDesignMapper designMapper;
@@ -133,6 +133,7 @@ public class WindowGlassServiceImpl implements WindowGlassService {
             case "TRAPEZOID" -> List.of(piece("梯形玻璃", shapeType, params, trapezoidArea(params), 1));
             case "L_SHAPE" -> calculateLShape(params);
             case "CORNER" -> calculateCorner(params);
+            case "CUSTOM_POLYGON" -> calculateCustomPolygon(params);
             default -> throw new BizException(400, "unsupported window shape type");
         };
     }
@@ -159,6 +160,25 @@ public class WindowGlassServiceImpl implements WindowGlassService {
         return pieces;
     }
 
+    private List<WindowGlassPieceVO> calculateCustomPolygon(Map<String, BigDecimal> params) {
+        int pointCount = positive(params, "pointCount").intValue();
+        if (pointCount < 3 || pointCount > 12) {
+            throw new BizException(400, "custom polygon point count must be between 3 and 12");
+        }
+        BigDecimal doubleArea = BigDecimal.ZERO;
+        for (int i = 1; i <= pointCount; i++) {
+            int next = i == pointCount ? 1 : i + 1;
+            BigDecimal x1 = nonNegative(params, "x" + i);
+            BigDecimal y1 = nonNegative(params, "y" + i);
+            BigDecimal x2 = nonNegative(params, "x" + next);
+            BigDecimal y2 = nonNegative(params, "y" + next);
+            doubleArea = doubleArea.add(x1.multiply(y2).subtract(x2.multiply(y1)));
+        }
+        // 自定义多边形用鞋带公式计算面积，坐标单位为 cm，最终统一换算为平方米。
+        BigDecimal area = toSquareMeter(doubleArea.abs().divide(new BigDecimal("2"), 4, RoundingMode.HALF_UP));
+        return List.of(piece("自定义多边形玻璃", "CUSTOM_POLYGON", params, area, 1));
+    }
+
     private BigDecimal rectangleArea(Map<String, BigDecimal> params, String widthKey, String heightKey) {
         return toSquareMeter(positive(params, widthKey).multiply(positive(params, heightKey)));
     }
@@ -178,13 +198,20 @@ public class WindowGlassServiceImpl implements WindowGlassService {
         return new WindowGlassPieceVO(name, shapeType, writeJson(shapeData), area, sortOrder);
     }
 
-    private BigDecimal toSquareMeter(BigDecimal squareMillimeter) {
-        return squareMillimeter.divide(SQUARE_MILLIMETER_TO_METER, 4, RoundingMode.HALF_UP);
+    private BigDecimal toSquareMeter(BigDecimal squareCentimeter) {
+        return squareCentimeter.divide(SQUARE_CENTIMETER_TO_METER, 4, RoundingMode.HALF_UP);
     }
 
     private BigDecimal positive(Map<String, BigDecimal> params, String key) {
         if (params == null || params.get(key) == null || params.get(key).compareTo(BigDecimal.ZERO) <= 0) {
             throw new BizException(400, "window param " + key + " must be greater than 0");
+        }
+        return params.get(key);
+    }
+
+    private BigDecimal nonNegative(Map<String, BigDecimal> params, String key) {
+        if (params == null || params.get(key) == null || params.get(key).compareTo(BigDecimal.ZERO) < 0) {
+            throw new BizException(400, "window param " + key + " cannot be negative");
         }
         return params.get(key);
     }
